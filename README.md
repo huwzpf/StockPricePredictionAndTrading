@@ -1,1 +1,1 @@
-# Projekt Inżynierski
+This branch contains implementations of algorithms from "Practical Time Series Analysis" book
