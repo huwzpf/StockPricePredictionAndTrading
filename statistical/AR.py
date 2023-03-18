@@ -9,6 +9,7 @@ from utlis import download_csv
 '''
 autoregressive model 
 '''
+# TODO - should coeffs be calculated with OLS not as PACF
 
 
 def AR(q: int, data_vector: pandas.DataFrame, zero_coeffs: List[int] = None) -> np.ndarray:

@@ -8,7 +8,7 @@ from utlis import download_csv
 '''
 moving average model 
 '''
-# TODO check correctness
+# TODO - how prediction should be made - should intercept term be calculated / taken as moving avg / assumed to be 0?
 
 
 def MA(q: int, data_vector: pandas.DataFrame, zero_coeffs:  List[int] = None) -> np.ndarray:
