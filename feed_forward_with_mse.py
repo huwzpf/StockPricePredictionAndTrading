@@ -4,6 +4,8 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 
+# this does not work very well xD
+
 # defines
 n_locations = 20
 n_samples = 10000
