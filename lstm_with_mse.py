@@ -24,7 +24,7 @@ def dataset_to_numpy(d):
     return np.array(list(d.as_numpy_iterator())[0])
 
 # This works a lot better than feed forward
-# It achieves less than 0.03 MSE on training set with more than 0.75 correlation
+# It achieves less than 0.015 MSE on training set with more than 0.75 correlation
 
 MODEL_FILEPATH = "lstm_simple_model.keras"
 LOAD_MODEL = False
@@ -61,6 +61,7 @@ dataset = (
     .shuffle(BUFFER_SIZE)
     .batch(BATCH_SIZE))
 
+# saving VALIDATION_SIZE % of data for validation and one batch for testing after training
 validation_sample_size = int(len(dataset) * VALIDATION_SIZE)
 validation_dataset = dataset.take(validation_sample_size)
 train_dataset = dataset.skip(validation_sample_size)
@@ -72,7 +73,7 @@ else:
     model = keras.Sequential([layers.LSTM(10, return_sequences=True), layers.Dense(1)])
     model.compile(optimizer=keras.optimizers.Adam(), loss=keras.losses.MeanSquaredError())
     # fit
-    model.fit(train_dataset, epochs=1, validation_data=validation_dataset)
+    model.fit(train_dataset, epochs=3, validation_data=validation_dataset)
     # save model
     model.save(MODEL_FILEPATH)
 
