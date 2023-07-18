@@ -6,7 +6,12 @@ from tensorflow import keras
 from tensorflow.keras import layers
 
 # this does not work very well xD
-# after 100 iters goes to MSE ~= 0.85 and correlation ~= 0.37 while training, which results in absolute error on test ~= 0.76
+# after 30 iters goes to MSE ~= 0.8 and correlation ~= 0.44 while training,
+# although it does not generalize too well - validation loss is kept usually around 0.95 with correlation of ~0.1
+# which results in mean absolute error on test set of around 0.73
+
+# not sure if it's overfitting or there's something wrong with data prep / network arch
+# or just acceptable generalization results can't be achieved with feed-forward NN
 
 # defines
 n_locations = 40
@@ -39,8 +44,8 @@ model = keras.Sequential([keras.Input(shape=(window_size,)),
                           layers.Dense(320, activation="relu"),
                           layers.Dense(80, activation="relu"),
                           layers.Dense(20, activation="relu"),
-                          layers.Dense(1)])
-model.compile(optimizer=keras.optimizers.RMSprop(), loss=keras.losses.MeanSquaredError(), metrics=[tfp.stats.correlation])
+                          layers.Dense(1, activation="linear")])
+model.compile(optimizer=keras.optimizers.Adam(), loss=keras.losses.MeanSquaredError(), metrics=[tfp.stats.correlation])
 
 # fit
 model.fit(x_train, y_train, batch_size=100, epochs=30, validation_data=(x_val, y_val))
