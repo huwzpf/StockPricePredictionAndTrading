@@ -14,7 +14,7 @@ AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 # Configuration variables
 STARTING_YEAR = '2008'
 ENDING_YEAR = '2021'
-COMPANY = 'BAMXF' # 'VLKAF' 'BP'
+COMPANY = 'VLKAF' # 'BAMXF' 'BP'
 
 # # Create list of years which data will be downloaded for
 YEARS = []
@@ -23,12 +23,12 @@ END_YEAR = int(ENDING_YEAR)
 while (YEAR <= END_YEAR):
     YEARS.append('{0}'.format(YEAR))
     YEAR+=1
-print(YEARS)   
+print(YEARS)
 
 # Create appropariate folder structure
-os.mkdir('{0}'.format(COMPANY))
+os.mkdir('datasets/{0}'.format(COMPANY))
 for YEAR in YEARS:
-    os.mkdir('{0}/{0}{1}'.format(COMPANY, YEAR))
+    os.mkdir('datasets/{0}/{0}{1}'.format(COMPANY, YEAR))
 
 # Set up AWS connection and create bucket
 s3 = boto3.resource('s3',
@@ -43,7 +43,7 @@ for year in YEARS:
     
     for obj in bucket.objects.filter(Prefix='trades/symbol={0}/date={1}'.format(COMPANY, year)):
         path, filename = os.path.split(obj.key)
-        destination_folder = os.path.abspath('{0}/{1}{2}{3}'.format(COMPANY,COMPANY, year, os.sep))
+        destination_folder = os.path.abspath('datasets/{0}/{1}{2}{3}'.format(COMPANY,COMPANY, year, os.sep))
         bucket.download_file(obj.key, os.path.join(destination_folder, filename))
         print(os.path.join(destination_folder, filename))
         print('Trades: {0}:{1}'.format(bucket.name, obj.key))
@@ -61,19 +61,19 @@ for year in YEARS:
     first = True
     counter = 0
     global df
-    for file in os.listdir('{0}/{0}{1}'.format(COMPANY, year)):     
+    for file in os.listdir('datasets/{0}/{0}{1}'.format(COMPANY, year)):     
         if file.endswith('.parquet'):
             filename = file
-            source = pd.read_parquet('{0}/{0}{1}/'.format(COMPANY, year) + filename)
+            source = pd.read_parquet('datasets/{0}/{0}{1}/'.format(COMPANY, year) + filename)
             if first:
                 df = source
-                df.to_csv('{0}/{0}{1}.csv'.format(COMPANY, year))
+                df.to_csv('datasets/{0}/{0}{1}.csv'.format(COMPANY, year))
                 print('First parquet file from year {0} converted to csv!'.format(year))
                 counter += 1
                 first = False
             else:
                 df = source
-                df.to_csv('{0}/{0}{1}.csv'.format(COMPANY, year), mode='a', header=False)
+                df.to_csv('datasets/{0}/{0}{1}.csv'.format(COMPANY, year), mode='a', header=False)
                 counter += 1 
                 if ((counter % 100) == 0):
                     print('-------------------------------------------------')
@@ -85,11 +85,11 @@ for year in YEARS:
 
 # Aggregate data
 for year in YEARS: 
-    df = pd.read_csv('{0}/{0}{1}.csv'.format(COMPANY, year), index_col='timestamp', usecols=['timestamp', 'price'], dtype={"price": "float64"})
+    df = pd.read_csv('datasets/{0}/{0}{1}.csv'.format(COMPANY, year), index_col='timestamp', usecols=['timestamp', 'price'], dtype={"price": "float64"})
     df.index = df.index.sort_values()
     df.index = pd.to_datetime(df.index)
     df = df.groupby([df.index.year.values, df.index.month.values]).apply(pd.Series.tail,1)
-    df.to_csv('{0}/{0}{1}aggregated.csv'.format(COMPANY, year))
+    df.to_csv('datasets/{0}/{0}{1}aggregated.csv'.format(COMPANY, year))
 
 # TODO: Aggregate quotes
 
@@ -98,18 +98,18 @@ HEADER = ['year', 'month', 'timestamp', 'price']
 
 first = True
 for year in YEARS:
-    df = pd.read_csv('{0}/{0}{1}aggregated.csv'.format(COMPANY, year))
+    df = pd.read_csv('datasets/{0}/{0}{1}aggregated.csv'.format(COMPANY, year))
     if first: 
-        df.to_csv('{0}/{0}monthly.csv'.format(COMPANY), header=HEADER, index = False)
+        df.to_csv('datasets/{0}/{0}monthly.csv'.format(COMPANY), header=HEADER, index = False)
         first = False
     else:
-        df.to_csv('{0}/{0}monthly.csv'.format(COMPANY), mode='a', header=False, index = False)
+        df.to_csv('datasets/{0}/{0}monthly.csv'.format(COMPANY), mode='a', header=False, index = False)
 
 # TODO: Load aggregated quotes
 
 # # Create charts
 
-df = pd.read_csv('{0}/{0}monthly.csv'.format(COMPANY))
+df = pd.read_csv('datasets/{0}/{0}monthly.csv'.format(COMPANY))
 df.set_index('timestamp', inplace=True)
 df.index = pd.to_datetime(df.index)
 
@@ -121,5 +121,5 @@ plt.title('{0} stock monthly closing prices {1} - {2}'.format(COMPANY, STARTING_
 plt.xlabel('Date')
 plt.ylabel('Monthly closing price values')
 plt.legend(['{0}'.format(COMPANY)])
-plt.savefig('{0}/{0}_monthly_closing_prices.png'.format(COMPANY));
+plt.savefig('datasets/{0}/{0}_monthly_closing_prices.png'.format(COMPANY));
 plt.show()

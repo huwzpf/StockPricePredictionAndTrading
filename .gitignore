@@ -3,6 +3,4 @@ __pycache__/
 *.keras
 .env
 .venv/
-BAMXF/
-VLKAF/
-BP/
+datasets/
