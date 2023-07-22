@@ -6,19 +6,26 @@ To install requirements enter `pip install -r requirements.txt `
 
 # NASDAQ script usage
 
-usage: data_api.py [-h] [--start START] [--end END] [--company COMPANY] [--trades] [--quotas] [--download] [--merge]
-                   [--aggregate] [--visualize]
+**python3 data_api.py** `[-h]` `[--start START]` `[--end END]` `[--company COMPANY]` `[--trades]` `[--quotas]` `[--download]` `[--merge]`
+            `[--aggregate]` `[--visualize]`
 
-options:
-  -h, --help            show this help message and exit
-  --start START, -s START
-                        Starting year which data will be downloaded for.
-  --end END, -e END     Ending year which data will be downloaded for.
-  --company COMPANY, -c COMPANY
-                        Company name, ex: (BP,BAMXF,VLKAF)
-  --trades, -t          Choose trades.
-  --quotas, -q          Choose quotas.
-  --download, -d        Only download.
-  --merge, -m           Only merge.
-  --aggregate, -a       Only aggregate.
-  --visualize, -v       Only visualize.
+**options:** <br>
+  - `-h, --help` <br>
+  - `--start START, -s START`  <br>
+    * Starting year which data will be downloaded for.
+  - `--end END, -e END`  <br>
+    * Ending year which data will be downloaded for.
+  - `--company COMPANY, -c` <br>
+    * Company name, ex: *(BP,BAMXF,VLKAF)*
+  - `--trades, -t` <br>
+    * Choose trades.
+  - `--quotas, -q` <br>
+    * Choose quotas.
+  - `--download, -d` <br>
+    * Only download.
+  - `--merge, -m` <br>
+    * Only merge.
+  - `--aggregate, -a` <br>
+    * Only aggregate.
+  - `--visualize, -v` <br>
+    * Only visualize.
