@@ -10,12 +10,11 @@ def main():
     parser.add_argument("--company", "-c", help="Company name, ex: (BP,BAMXF,VLKAF)")
 
     parser.add_argument("--trades", "-t", action="store_true", help="Choose trades.")
-    parser.add_argument("--quotas", "-q", action="store_true", help="Choose quotas.")
+    parser.add_argument("--quotes", "-q", action="store_true", help="Choose quotes.")
 
     parser.add_argument("--download", "-d", action="store_true", help="Only download.")
     parser.add_argument("--merge", "-m", action="store_true", help="Only merge.")
     parser.add_argument("--aggregate", "-a", action="store_true", help="Only aggregate.")
-    parser.add_argument("--visualize", "-v", action="store_true", help="Only visualize.")
 
     args = parser.parse_args()
 
@@ -36,25 +35,22 @@ def main():
                 nasdaq.download_trades()
                 print(type(args.company))
             else:
-                nasdaq.download_quotas()
+                nasdaq.download_quotes()
 
         if args.merge:
             if args.trades:
                 nasdaq.merge_trades()
             else:
-                nasdaq.merge_quotas()
+                print("No merge function for quotes yet!")
 
         if args.aggregate:
             if args.trades:
                 nasdaq.aggregate_trades()
             else:
-                nasdaq.aggregate_quotas()
+                print("No aggregate function for quotes yet!")
 
         if args.visualize:
-            if args.trades:
-                nasdaq.visualize_trades()
-            else:
-                nasdaq.visualize_quotas()
+            print("No visualize function yet!")
 
 if __name__ == "__main__":
     main()
