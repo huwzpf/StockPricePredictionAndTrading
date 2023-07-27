@@ -5,7 +5,8 @@ def normalize_array(arr, method='min_max'):
         # Min-max normalization
         arr_min = np.min(arr)
         arr_max = np.max(arr)
-        normalized_arr = (arr - arr_min) / (arr_max - arr_min)
+        denominator = 1 if arr_min == arr_max else (arr_max - arr_min)
+        normalized_arr = (arr - arr_min) / denominator
     elif method == 'mean_std':
         # Mean and standard deviation normalization
         arr_mean = np.mean(arr)
