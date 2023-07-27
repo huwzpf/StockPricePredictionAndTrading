@@ -78,13 +78,19 @@ if LOAD_MODEL:
     model = tf.keras.saving.load_model(MODEL_FILEPATH)
 else:
     #model arch
+    # can ve either zeros or hidden_state
+    input_to_decoder = 'zeros'
     hidden_units = 10
 
     encoder_inputs = layers.Input(shape=(BATCH_TIMESTEPS, 1))
     encoder = layers.LSTM(hidden_units, return_state=True, return_sequences=False)
     encoder_outputs, state_h, state_c = encoder(encoder_inputs)
 
-    decoder = layers.RepeatVector(output_timesteps)(state_h)
+    if input_to_decoder == 'hidden_state':
+        decoder = layers.RepeatVector(output_timesteps)(state_h)
+    else:
+        decoder = layers.RepeatVector(output_timesteps)(tf.zeros_like(state_h))
+
     decoder_lstm = layers.LSTM(hidden_units, return_sequences=True, return_state=False)
     decoder = decoder_lstm(decoder, initial_state=[state_h, state_c])
 
