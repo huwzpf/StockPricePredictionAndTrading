@@ -28,9 +28,9 @@ def dataset_to_numpy(d):
     return np.array(list(d.as_numpy_iterator())[0])
 
 # This is simple autoencoder model
-# It predicts output_steps = 2
+# It predicts output_steps = 5
 # Decoder takes encoder output as input at each timestep
-# It achieves less than 0.04 MSE on training set
+# It achieves less than 0.07 MSE on training set after 1 epoch
 
 MODEL_FILEPATH = "autoenc_simple_model.keras"
 LOAD_MODEL = False
@@ -78,23 +78,21 @@ if LOAD_MODEL:
     model = tf.keras.saving.load_model(MODEL_FILEPATH)
 else:
     #model arch
-    # can ve either zeros or hidden_state
-    input_to_decoder = 'zeros'
     hidden_units = 10
 
     encoder_inputs = layers.Input(shape=(BATCH_TIMESTEPS, 1))
-    encoder = layers.LSTM(hidden_units, return_state=True, return_sequences=False)
+    encoder = layers.LSTM(hidden_units, return_state=True, return_sequences=False, name="encoder")
     encoder_outputs, state_h, state_c = encoder(encoder_inputs)
 
-    if input_to_decoder == 'hidden_state':
-        decoder = layers.RepeatVector(output_timesteps)(state_h)
-    else:
-        decoder = layers.RepeatVector(output_timesteps)(tf.zeros((BATCH_SIZE, 1)))
+    decoder = layers.RepeatVector(output_timesteps)(tf.zeros((BATCH_SIZE, 1)))
 
-    decoder_lstm = layers.LSTM(hidden_units, return_sequences=True, return_state=False)
-    decoder = decoder_lstm(decoder, initial_state=[state_h, state_c])
+    decoder_lstm = layers.LSTM(hidden_units, return_sequences=True, return_state=False, name="decoder")
+    decoder_outputs = decoder_lstm(decoder, initial_state=[state_h, state_c])
 
-    out = layers.TimeDistributed(layers.Dense(1))(decoder)
+    attention_outputs = layers.Attention()([decoder_outputs, encoder_outputs])
+    dense_inputs = keras.layers.Concatenate()([attention_outputs, decoder_outputs])
+
+    out = layers.Dense(1)(dense_inputs)
     model = models.Model(encoder_inputs, out)
     model.compile(optimizer=keras.optimizers.Adam(), loss=keras.losses.MeanSquaredError())
     # fit
