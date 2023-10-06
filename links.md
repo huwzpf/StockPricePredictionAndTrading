@@ -17,3 +17,11 @@
 
 [Encoder - decoder + Attention in Keras](https://www.tensorflow.org/text/tutorials/nmt_with_attention)
 
+[Original transformer paper + code and explanations](http://nlp.seas.harvard.edu/2018/04/03/attention.html)
+
+[Transformer implementation in Keras (for NLP)](https://www.tensorflow.org/text/tutorials/transformer)
+
+[Simple explanation of transformers](https://www.youtube.com/watch?v=zxQyTK8quyY)
+
+[Blog post on Transformers for time series prediction - contains useful references](https://huggingface.co/blog/autoformer)
+
