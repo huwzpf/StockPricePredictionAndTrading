@@ -24,8 +24,7 @@ output_timesteps = 5
 
 
 def split_encoder(data_batch):
-    decoder_timesteps = output_timesteps + 1
-    return data_batch[:-decoder_timesteps]
+    return data_batch[:-output_timesteps]
 
 
 def split_output(data_batch):
@@ -33,8 +32,14 @@ def split_output(data_batch):
 
 
 def split_input_target(data_batch):
-    decoder_timesteps = output_timesteps + 1
-    return (data_batch[:-decoder_timesteps], data_batch[-decoder_timesteps:-1]), data_batch[-output_timesteps:]
+    # data_batch has BATCH_TIMESTEPS + output_timesteps timesteps
+    # encoder input_size is BATCH_TIMESTEPS
+    encoder_input = data_batch[:-output_timesteps]
+    # decoder input size is output_timesteps, but it's first element is encoder input's last element
+    decoder_input = data_batch[-(output_timesteps + 1): -1]
+    # decoder output size is output_timesteps
+    decoder_output = data_batch[-output_timesteps:]
+    return (encoder_input, decoder_input), decoder_output
 
 
 def postional_encoding(timesteps, d_model):
@@ -201,9 +206,7 @@ for row in raw_data:
     row_reshaped = row.reshape(row.shape[0], 1)
     i = 0
     while i + BATCH_TIMESTEPS < len(row):
-        batch_x = row_reshaped[i:i+BATCH_TIMESTEPS, :]
-        batch_y = np.concatenate((np.zeros((1, 1)), row_reshaped[i+BATCH_TIMESTEPS: i+BATCH_TIMESTEPS+output_timesteps, :]))
-        batch_data = np.concatenate((batch_x, batch_y))
+        batch_data = row_reshaped[i:i+BATCH_TIMESTEPS+output_timesteps, :]
         batches.append(normalize_array(batch_data, 'min_max'))
         i += BATCH_TIMESTEPS + output_timesteps
 
