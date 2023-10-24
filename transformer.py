@@ -1,45 +1,6 @@
 import numpy as np
-import pandas as pd
 import tensorflow as tf
-import matplotlib.pyplot as plt
 from tensorflow import keras
-from tensorflow.keras import layers
-from tensorflow.keras import models
-from normalize import normalize_array
-MODEL_FILEPATH = "transformer_model.keras"
-LOAD_MODEL = False
-# defines
-n_locations = 40
-n_samples = 25000
-VALIDATION_SIZE = 0.02
-BATCH_TIMESTEPS = 25
-BATCH_SIZE = 5
-TEST_BATCHES = BATCH_SIZE
-# Buffer size to shuffle the dataset
-# (TF data is designed to work with possibly infinite sequences,
-# so it doesn't attempt to shuffle the entire sequence in memory. Instead,
-# it maintains a buffer in which it shuffles elements).
-BUFFER_SIZE = 10000
-output_timesteps = 5
-
-
-def split_encoder(data_batch):
-    return data_batch[:-output_timesteps]
-
-
-def split_output(data_batch):
-    return data_batch[-output_timesteps:]
-
-
-def split_input_target(data_batch):
-    # data_batch has BATCH_TIMESTEPS + output_timesteps timesteps
-    # encoder input_size is BATCH_TIMESTEPS
-    encoder_input = data_batch[:-output_timesteps]
-    # decoder input size is output_timesteps, but it's first element is encoder input's last element
-    decoder_input = data_batch[-(output_timesteps + 1): -1]
-    # decoder output size is output_timesteps
-    decoder_output = data_batch[-output_timesteps:]
-    return (encoder_input, decoder_input), decoder_output
 
 
 def postional_encoding(timesteps, d_model):
@@ -62,6 +23,7 @@ def postional_encoding(timesteps, d_model):
 
     return tf.cast(encoding, dtype=tf.float32)[:timesteps, :]
 
+
 class TransformerInput(keras.layers.Layer):
   def __init__(self, d_model):
     super().__init__()
@@ -73,6 +35,7 @@ class TransformerInput(keras.layers.Layer):
     x = self.embedding(x)
     x = x + postional_encoding(length, self.d_model)
     return x
+
 
 class FeedForward(keras.layers.Layer):
     def __init__(self, d_model, dff):
@@ -168,102 +131,8 @@ class Transformer(keras.Model):
         self.final_layer = keras.layers.Dense(output_size)
 
     def call(self, data):
-        encoder_inputs, decoder_inputs = data # decoder inputs are outputs shifted right
+        encoder_inputs, decoder_inputs = data
         context = self.encoder(encoder_inputs)
         x = self.decoder(decoder_inputs, context)
         x = self.final_layer(x)
         return x
-
-
-class TransformerWrapper(tf.Module):
-    def __init__(self, transformer):
-        super().__init__()
-        self.transformer = transformer
-
-    def __call__(self, x):
-        output_array = tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
-        start = np.zeros(x.shape[0])
-        output_array = output_array.write(0, start)
-        for i in range(output_timesteps):
-            output = tf.transpose(output_array.stack()[tf.newaxis]) # batch_size x timesteps x output_size
-            predictions = transformer([x, output], training=False) # batch_size x timesteps x output_size
-            predicted_values = predictions[:, -1, -1]
-            output_array = output_array.write(i + 1, predicted_values)
-
-        return output_array.stack()[1:, :].numpy()
-
-# This is basic Transformer model
-# It predicts output_steps = 5
-# Decoder takes encoder output as input at each timestep
-# It achieves less than 0.015 MSE on training set after 1 epoch
-
-
-#data prep
-batches = []
-raw_data = pd.read_csv('electricity.txt', sep=',', header=None).to_numpy()[:n_samples, :n_locations].T
-
-for row in raw_data:
-    row_reshaped = row.reshape(row.shape[0], 1)
-    i = 0
-    while i + BATCH_TIMESTEPS < len(row):
-        batch_data = row_reshaped[i:i+BATCH_TIMESTEPS+output_timesteps, :]
-        batches.append(normalize_array(batch_data, 'min_max'))
-        i += BATCH_TIMESTEPS + output_timesteps
-
-np.random.shuffle(batches)
-
-test_x = np.array(list(map(split_encoder, batches[-TEST_BATCHES:])))
-test_y = np.array(list(map(split_output, batches[-TEST_BATCHES:])))
-
-dataset = tf.data.Dataset.from_tensor_slices(batches[:-TEST_BATCHES])
-dataset = (
-    dataset
-    .map(split_input_target)
-    .shuffle(BUFFER_SIZE)
-    .batch(BATCH_SIZE))
-
-# saving VALIDATION_SIZE % of data for validation and one batch for testing after training
-validation_sample_size = int(len(dataset) * VALIDATION_SIZE)
-validation_dataset = dataset.take(validation_sample_size)
-train_dataset = dataset.skip(validation_sample_size)
-
-if LOAD_MODEL:
-    transformer = keras.saving.load_model(MODEL_FILEPATH)
-else:
-    #model arch
-    n_layers = 4
-    d_model = 12
-    dff = 51
-    num_heads = 2
-
-    transformer = Transformer(n_layers, d_model, dff, num_heads, 1)
-    transformer.compile(optimizer=keras.optimizers.Adam(), loss=keras.losses.MeanSquaredError())
-    # fit
-    transformer.fit(train_dataset, epochs=1, validation_data=validation_dataset)
-    transformer.summary()
-    # save model
-    transformer.save(MODEL_FILEPATH)
-
-# predictions
-
-t = TransformerWrapper(transformer)
-test_outputs = t(test_x)
-test_real_vals = test_y[:, :, -1]
-test_inputs = test_x[:, :, -1]
-
-x_axis_data = np.arange(0, BATCH_TIMESTEPS, 1)
-x_axis_pred = np.arange(BATCH_TIMESTEPS - 1, BATCH_TIMESTEPS + output_timesteps, 1)
-for i in range(TEST_BATCHES):
-    plt.figure()
-    plt.plot(x_axis_data, test_inputs[i], color='blue', label='input')
-
-    preds = [test_inputs[i][-1]] + test_outputs[i].tolist()
-    real = [test_inputs[i][-1]] + test_real_vals[i].tolist()
-
-    plt.plot(x_axis_pred, preds, color='red', label='prediction')
-    plt.plot(x_axis_pred, real, color='green', label='real output')
-    plt.legend()
-    plt.show()
-    print(f'Sample {i}:\nPredicted: {test_outputs[i]}, Real: {test_real_vals[i]}')
-
-print(f'\nMSE ON TEST SET: {np.mean(np.square(test_outputs - test_real_vals))}')
