@@ -20,7 +20,7 @@ class NasdaqData:
         """
         Download csv for `self.symbols` companies for `self.start` to `self.end` period.
         
-        @param n: If overridenc choose `n` random companies symbols to download instead.
+        @param n: If overridden choose `n` random companies symbols to download instead.
         """
         if not os.path.exists(f"data/companies/{self.start}:{self.end}"):
             os.makedirs(f"data/companies/{self.start}:{self.end}")
@@ -43,11 +43,12 @@ class NasdaqData:
         """
         self.symbols = list(set(self.symbols.extend(symbols)))
         
-    def merge_csv(self,n=0):
+    def merge_csv(self,normalize=False,n=0):
         """
         Merge all csvs from `data/comapnies` folder and normalize relative to each column.
         
-        @param n: If overriden choose `n` csvs and merge them together instead.
+        @param normalize: Normalize elements to range [0;1] column-wise.
+        @param n: If overridden choose `n` csvs and merge them together instead.
         """
         path = f"data/companies/{self.start}:{self.end}"
         merge_df = pd.DataFrame()
@@ -62,10 +63,10 @@ class NasdaqData:
         for csv in csvs:
                 symbol= csv[:-4]
                 df = pd.read_csv(os.path.join(path,csv))
-                # Normalize
-                min_val = df['Close'].min()
-                max_val = df['Close'].max()
-                df['Close'] = (df['Close'] - min_val) / (max_val - min_val)
+                if normalize:
+                    min_val = df['Close'].min()
+                    max_val = df['Close'].max()
+                    df['Close'] = (df['Close'] - min_val) / (max_val - min_val)
                 merge_df[symbol] = df['Close']
 
         merge_df.to_csv(os.path.join(path,f"merged_{len(csvs)}.csv"),index=False)
