@@ -1,4 +1,5 @@
 # Projekt Inżynierski
+This repository contains source code for thesis "Implementation, analysis and evaluation of different investement strategies on the Nasdaq stock market"
 
 # Setup
 
